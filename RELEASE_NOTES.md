@@ -1,8 +1,6 @@
-First release.
+Horse Store Refresh 1.0.1 for Horses of Hoofprint Bay.
 
-- A "New horses" button in the horse trader's sales stable brings in a new set of horses for sale. It works once a day by default; you can allow up to 10 times a day.
-- Reserved horses stay in the stable when new horses come in.
-- A "Reserved" sort button puts the reserved horses first.
-- With Mod Manager installed, the settings are in the Mods menu. Mod Manager is not required.
+- Fixed: if you covered a mare with one of the trader's stallions for sale and then clicked New horses, the foal's pedigree showed its sire as Unknown. The stallion now stays in the pedigree, as he does when the trader's stock changes on its own. Foals whose sire was already lost before this update still show Unknown.
+- New horses also brings in some new studs. The 1.0.0 notes said the studs stay the same, which was wrong.
 
-Install: extract the zip into the game folder, so that you have `BepInEx\plugins\HorseStoreRefresh\HorseStoreRefresh.dll`. Needs BepInEx 6 bleeding edge build 793 (IL2CPP). Made for game version 1.0.5.
+Install: extract the zip into the game folder, so that you have `BepInEx\plugins\HorseStoreRefresh\HorseStoreRefresh.dll` (replace the old file). Needs BepInEx 6 bleeding edge build 793 (IL2CPP). Made for game version 1.0.5.

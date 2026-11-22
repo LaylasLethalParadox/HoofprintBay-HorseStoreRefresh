@@ -14,7 +14,7 @@ public class Plugin : BasePlugin
     internal const string ModManagerGuid = "hoofprintbay.modmanager";
     public const string Guid = "hoofprintbay.horsestorerefresh";
     public const string Name = "Horse Store Refresh";
-    public const string Version = "1.0.0";
+    public const string Version = "1.0.1";
 
     internal static ManualLogSource Logger;
     internal static ConfigEntry<bool> Enabled;

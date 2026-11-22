@@ -124,8 +124,10 @@ internal static class RefreshButton
             var data = DataManager.i.data;
             var before = Names(data.traderHorses);
             var reserved = Reserved(data);
+            var parents = Parents(data);
             Regenerate(breeder);
             KeepReserved(data, reserved);
+            KeepParents(data, parents);
             RefreshState.MarkUsed();
             Plugin.Logger.LogInfo($"Day {data.round}: horses for sale were [{before}], now [{Names(data.traderHorses)}]; studs [{Names(data.traderStuds)}].");
             breeder.OpenBuyHorse();
@@ -173,6 +175,51 @@ internal static class RefreshButton
         while (list.Count > size)
             list.RemoveAt(list.Count - 1);
         Plugin.Logger.LogInfo($"Kept reserved: [{string.Join(", ", reserved.Select(h => h.name))}].");
+    }
+
+    // A trader horse or stud that covered a mare has the foal in uuidOffsprings. The regeneration moves such
+    // studs to pastHorses itself but simply drops horses for sale, so the foal's pedigree showed an unknown sire.
+    private static List<HorseData> Parents(SaveGameData data)
+    {
+        var found = new List<HorseData>();
+        foreach (var list in new[] { data.traderHorses, data.traderStuds })
+            if (list != null)
+                for (var i = 0; i < list.Count; i++)
+                    if (list[i]?.uuidOffsprings != null && list[i].uuidOffsprings.Count > 0)
+                        found.Add(list[i]);
+        return found;
+    }
+
+    // The game itself keeps such horses in pastHorses when the trader's stock changes; do the same, but only
+    // for a horse whose offspring is still somewhere in the save (else nothing shows it in a pedigree).
+    private static void KeepParents(SaveGameData data, List<HorseData> parents)
+    {
+        var known = new HashSet<string>();
+        foreach (var list in new[] { data.horses, data.foalsAndPregnancies, data.boardedHorses, data.pastHorses, data.traderHorses, data.traderStuds })
+            if (list != null)
+                for (var i = 0; i < list.Count; i++)
+                    if (list[i] != null)
+                        known.Add(list[i].uuid);
+        var moved = new List<string>();
+        foreach (var h in parents)
+        {
+            if (known.Contains(h.uuid) || !HasKnownOffspring(h, known))
+                continue;
+            if (data.pastHorses == null)
+                data.pastHorses = new Il2CppSystem.Collections.Generic.List<HorseData>();
+            data.pastHorses.Add(h);
+            moved.Add(h.name);
+        }
+        if (moved.Count > 0)
+            Plugin.Logger.LogInfo($"Kept as past horses (parents of foals): [{string.Join(", ", moved)}].");
+    }
+
+    private static bool HasKnownOffspring(HorseData h, HashSet<string> known)
+    {
+        for (var i = 0; i < h.uuidOffsprings.Count; i++)
+            if (known.Contains(h.uuidOffsprings[i]))
+                return true;
+        return false;
     }
 
     private static string Names(Il2CppSystem.Collections.Generic.List<HorseData> list)
