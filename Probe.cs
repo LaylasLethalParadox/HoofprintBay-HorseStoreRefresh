@@ -173,5 +173,81 @@ public static class Probe
         RefreshState.ResetForTest();
         return "ok";
     }
+
+    // Opens the game's own sell dialog for a horse (Breeder screen must be loaded).
+    public static string Sell(string name)
+    {
+        var h = Find(name);
+        if (h == null) return "not found";
+        UnityEngine.Resources.FindObjectsOfTypeAll<Breeder>()[0].SellHorseDialog(h);
+        return "dialog";
+    }
+
+    // Every horse in the save with list, mother, father, offspring count, whereabouts and removedInRound.
+    public static string All()
+    {
+        var d = DataManager.i.data;
+        var s = $"round={d.round}";
+        void L(Il2CppSystem.Collections.Generic.List<HorseData> l, string n)
+        {
+            s += $" || {n}({l?.Count}):";
+            if (l != null) for (var i = 0; i < l.Count; i++)
+                s += $" {l[i].name}#{l[i].uuid.Substring(0, 6)} m={Short(l[i].uuidMother)} f={Short(l[i].uuidFather)} off={l[i].uuidOffsprings?.Count} w={l[i].whereabouts} rm={l[i].removedInRound};";
+        }
+        L(d.horses, "horses"); L(d.foalsAndPregnancies, "foals"); L(d.boardedHorses, "boarded");
+        L(d.pastHorses, "past"); L(d.traderHorses, "trader"); L(d.traderStuds, "studs");
+        return s;
+    }
+
+    private static string Short(string u) => string.IsNullOrEmpty(u) ? "-" : u.Substring(0, System.Math.Min(6, u.Length));
+
+    // Test-only: makes `child` an offspring of `mother` (memory only), to build a sold dam/daughter chain.
+    public static string Link(string mother, string child)
+    {
+        var m = Find(mother); var c = Find(child);
+        if (m == null || c == null) return "not found";
+        c.uuidMother = m.uuid;
+        m.uuidOffsprings.Add(c.uuid);
+        return "linked";
+    }
+
+    // Test-only: moves a past horse into the trader's stock (as a sold horse is), memory only.
+    public static string ToTrader(string name)
+    {
+        var d = DataManager.i.data;
+        var h = Find(name);
+        if (h == null) return "not found";
+        for (var i = d.pastHorses.Count - 1; i >= 0; i--) if (d.pastHorses[i].uuid == h.uuid) d.pastHorses.RemoveAt(i);
+        d.traderHorses.Add(h);
+        return "moved";
+    }
+
+    // Opens a horse's own screen (Stable scene), where the pedigree UI is loaded.
+    public static string OpenHorse(string name)
+    {
+        var h = Find(name);
+        if (h == null) return "not found";
+        DataManager.i.currentlySelectedHorse = h;
+        SceneSwitcher.i.SwitchSceneWithoutSaving("Stable");
+        return "switching";
+    }
+
+    // Opens the game's own buy dialog for a horse for sale (sales stable must be open).
+    public static string Buy(string name)
+    {
+        var h = Find(name);
+        if (h == null) return "not found";
+        UnityEngine.Resources.FindObjectsOfTypeAll<Breeder>()[0].BuyHorseDialog(h);
+        return "dialog";
+    }
+
+    // Which of the game's lookups find a horse (the pedigree may use a narrower one for grandparents).
+    public static string Lookup(string name)
+    {
+        var h = Find(name);
+        if (h == null) return "not found";
+        var d = DataManager.i.data;
+        return $"{h.name}: all={d.FindHorseInAllAllLists(h.uuid)?.name} everOwned={d.FindHorseInAllEverOwned(h.uuid)?.name} sires={d.FindHorseInAllPossibleSires(h.uuid)?.name} fullPedigree={h.HasFullPedigree()}";
+    }
 }
 #endif

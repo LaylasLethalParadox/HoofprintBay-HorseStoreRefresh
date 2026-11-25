@@ -14,7 +14,7 @@ public class Plugin : BasePlugin
     internal const string ModManagerGuid = "hoofprintbay.modmanager";
     public const string Guid = "hoofprintbay.horsestorerefresh";
     public const string Name = "Horse Store Refresh";
-    public const string Version = "1.0.1";
+    public const string Version = "1.0.2";
 
     internal static ManualLogSource Logger;
     internal static ConfigEntry<bool> Enabled;
@@ -35,6 +35,7 @@ public class Plugin : BasePlugin
         harmony.PatchAll(typeof(global::HorseStoreRefresh.ReservedSort));
         harmony.PatchAll(typeof(RefreshButton));
         harmony.PatchAll(typeof(RefreshState));
+        harmony.PatchAll(typeof(Pedigree));
         if (IL2CPPChainloader.Instance.Plugins.ContainsKey(ModManagerGuid))
             ModManagerLink.Register();
         Log.LogInfo($"{Name} {Version} loaded.");

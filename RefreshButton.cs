@@ -177,45 +177,66 @@ internal static class RefreshButton
         Plugin.Logger.LogInfo($"Kept reserved: [{string.Join(", ", reserved.Select(h => h.name))}].");
     }
 
-    // A trader horse or stud that covered a mare has the foal in uuidOffsprings. The regeneration moves such
-    // studs to pastHorses itself but simply drops horses for sale, so the foal's pedigree showed an unknown sire.
+    // Horses for sale (also ones the player sold, which go to the trader) and studs before the refresh.
+    // The regeneration moves studs with foals to pastHorses itself but simply drops horses for sale, so a
+    // foal's pedigree showed its sire or dam (and everything above) as Unknown.
     private static List<HorseData> Parents(SaveGameData data)
     {
         var found = new List<HorseData>();
         foreach (var list in new[] { data.traderHorses, data.traderStuds })
             if (list != null)
                 for (var i = 0; i < list.Count; i++)
-                    if (list[i]?.uuidOffsprings != null && list[i].uuidOffsprings.Count > 0)
+                    if (list[i] != null)
                         found.Add(list[i]);
         return found;
     }
 
-    // The game itself keeps such horses in pastHorses when the trader's stock changes; do the same, but only
-    // for a horse whose offspring is still somewhere in the save (else nothing shows it in a pedigree).
-    private static void KeepParents(SaveGameData data, List<HorseData> parents)
+    // The game's own rotation keeps every horse the player once owned (whereabouts SOLD, EXPORTED, ...) in
+    // pastHorses, and so a horse with offspring. Do the same, and also keep a dropped horse that a horse still
+    // in the save names as mother/father. Repeated, so a never-owned dam of a kept daughter stays as well.
+    private static void KeepParents(SaveGameData data, List<HorseData> before)
     {
         var known = new HashSet<string>();
+        var parentRefs = new HashSet<string>();
+        void Add(HorseData h)
+        {
+            known.Add(h.uuid);
+            if (!string.IsNullOrEmpty(h.uuidMother)) parentRefs.Add(h.uuidMother);
+            if (!string.IsNullOrEmpty(h.uuidFather)) parentRefs.Add(h.uuidFather);
+        }
         foreach (var list in new[] { data.horses, data.foalsAndPregnancies, data.boardedHorses, data.pastHorses, data.traderHorses, data.traderStuds })
             if (list != null)
                 for (var i = 0; i < list.Count; i++)
                     if (list[i] != null)
-                        known.Add(list[i].uuid);
+                        Add(list[i]);
+        var dropped = before.Where(h => !known.Contains(h.uuid)).ToList();
         var moved = new List<string>();
-        foreach (var h in parents)
+        bool changed;
+        do
         {
-            if (known.Contains(h.uuid) || !HasKnownOffspring(h, known))
-                continue;
-            if (data.pastHorses == null)
-                data.pastHorses = new Il2CppSystem.Collections.Generic.List<HorseData>();
-            data.pastHorses.Add(h);
-            moved.Add(h.name);
-        }
+            changed = false;
+            foreach (var h in dropped)
+            {
+                if (known.Contains(h.uuid))
+                    continue;
+                if (h.whereabouts == WhereaboutsType.NEVER_OWNED && !parentRefs.Contains(h.uuid) && !HasKnownOffspring(h, known))
+                    continue;
+                if (data.pastHorses == null)
+                    data.pastHorses = new Il2CppSystem.Collections.Generic.List<HorseData>();
+                data.pastHorses.Add(h);
+                Add(h);
+                moved.Add(h.name);
+                changed = true;
+            }
+        } while (changed);
         if (moved.Count > 0)
-            Plugin.Logger.LogInfo($"Kept as past horses (parents of foals): [{string.Join(", ", moved)}].");
+            Plugin.Logger.LogInfo($"Kept as past horses (once owned or parents): [{string.Join(", ", moved)}].");
     }
 
     private static bool HasKnownOffspring(HorseData h, HashSet<string> known)
     {
+        if (h.uuidOffsprings == null)
+            return false;
         for (var i = 0; i < h.uuidOffsprings.Count; i++)
             if (known.Contains(h.uuidOffsprings[i]))
                 return true;

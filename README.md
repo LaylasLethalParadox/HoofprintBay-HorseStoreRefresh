@@ -7,7 +7,7 @@ Horse Store Refresh for [Horses of Hoofprint Bay](https://store.steampowered.com
 - The uses are saved with your game. If you quit without saving, the old horses and the unused button come back together.
 - A "Reserved" sort button puts the reserved horses first, the one whose hold ends soonest at the top. Click it again to turn the order round.
 
-The new horses come from the game's own code for the trader, so they are the same kind of horses the trader would bring anyway. That code also swaps some of the studs for breeding. A stallion that sired one of your foals stays in the foal's pedigree.
+The new horses come from the game's own code for the trader, so they are the same kind of horses the trader would bring anyway. That code also swaps some of the studs for breeding. A horse you sold, or a horse for sale that sired or foaled one of yours, stays as a past horse, so pedigrees keep every generation.
 
 ## Install
 

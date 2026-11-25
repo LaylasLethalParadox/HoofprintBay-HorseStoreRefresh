@@ -6,7 +6,7 @@
     <RootNamespace>HorseStoreRefresh</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <!-- Keeps the build folder out of the DLL (its debug info path). -->
     <PathMap>$(MSBuildProjectDirectory)=HorseStoreRefresh</PathMap>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
